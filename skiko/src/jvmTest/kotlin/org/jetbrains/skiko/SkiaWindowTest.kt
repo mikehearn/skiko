@@ -1,8 +1,8 @@
 package org.jetbrains.skiko
 
-import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.yield
+import kotlinx.coroutines.*
+import kotlinx.coroutines.*
+import kotlinx.coroutines.swing.Swing
 import org.jetbrains.skia.Canvas
 import org.jetbrains.skia.FontMgr
 import org.jetbrains.skia.Paint
@@ -299,22 +299,17 @@ class SkiaWindowTest {
     fun `fallback to software renderer, fail on init context`() = swingTest {
         testFallbackToSoftware(
             object : RenderFactory {
-                override fun createContextHandler(
-                    layer: SkiaLayer,
-                    renderApi: GraphicsApi
-                ) = object : ContextHandler(layer) {
-                    override fun initContext() = false
-                    override fun initCanvas() = Unit
-                }
-
                 override fun createRedrawer(
                     layer: SkiaLayer,
                     renderApi: GraphicsApi,
                     properties: SkiaLayerProperties
-                ): Redrawer = object : Redrawer {
-                    override fun dispose() = Unit
-                    override fun needRedraw() = Unit
-                    override fun redrawImmediately() = layer.inDrawScope { layer.draw() }
+                ): Redrawer = object : Redrawer(
+                    object : ContextHandler(layer) {
+                        override fun initContext() = false
+                        override fun initCanvas() = Unit
+                    }
+                ) {
+                    override fun redrawImmediately() = layer.inDrawScope(contextHandler::draw)
                 }
             }
         )
@@ -324,14 +319,6 @@ class SkiaWindowTest {
     fun `fallback to software renderer, fail on create redrawer`() = swingTest {
         testFallbackToSoftware(
             object : RenderFactory {
-                override fun createContextHandler(
-                    layer: SkiaLayer,
-                    renderApi: GraphicsApi
-                ) = object : ContextHandler(layer) {
-                    override fun initContext() = true
-                    override fun initCanvas() = Unit
-                }
-
                 override fun createRedrawer(
                     layer: SkiaLayer,
                     renderApi: GraphicsApi,
@@ -345,21 +332,16 @@ class SkiaWindowTest {
     fun `fallback to software renderer, fail on draw`() = swingTest {
         testFallbackToSoftware(
             object : RenderFactory {
-                override fun createContextHandler(
-                    layer: SkiaLayer,
-                    renderApi: GraphicsApi
-                ) = object : ContextHandler(layer) {
-                    override fun initContext() = true
-                    override fun initCanvas() = Unit
-                }
-
                 override fun createRedrawer(
                     layer: SkiaLayer,
                     renderApi: GraphicsApi,
                     properties: SkiaLayerProperties
-                ) = object : Redrawer {
-                    override fun dispose() = Unit
-                    override fun needRedraw() = Unit
+                ) = object : Redrawer(
+                    object : ContextHandler(layer) {
+                        override fun initContext() = true
+                        override fun initCanvas() = Unit
+                    }
+                ) {
                     override fun redrawImmediately() = layer.inDrawScope {
                         throw RenderException()
                     }
@@ -402,14 +384,6 @@ class SkiaWindowTest {
     private class OverrideNonSoftwareRenderFactory(
         private val nonSoftwareRenderFactory: RenderFactory
     ) : RenderFactory {
-        override fun createContextHandler(layer: SkiaLayer, renderApi: GraphicsApi): ContextHandler {
-            return if (renderApi == GraphicsApi.SOFTWARE) {
-                RenderFactory.Default.createContextHandler(layer, renderApi)
-            } else {
-                nonSoftwareRenderFactory.createContextHandler(layer, renderApi)
-            }
-        }
-
         override fun createRedrawer(
             layer: SkiaLayer,
             renderApi: GraphicsApi,
