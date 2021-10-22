@@ -35,8 +35,8 @@ class Pixmap internal constructor(
     }
 
     fun reset(info: ImageInfo, buffer: ByteBuffer, rowBytes: Int) {
-        javaBuffer = buffer
         reset(info, BufferUtil.getPointerFromByteBuffer(buffer), rowBytes)
+        javaBuffer = buffer
     }
 
     fun setColorSpace(colorSpace: ColorSpace?) {
