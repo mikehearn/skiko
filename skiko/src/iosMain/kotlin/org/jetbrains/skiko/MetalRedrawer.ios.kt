@@ -1,4 +1,4 @@
-package org.jetbrains.skiko.redrawer
+package org.jetbrains.skiko
 
 import kotlinx.cinterop.addressOf
 import kotlinx.cinterop.autoreleasepool
@@ -8,6 +8,7 @@ import kotlinx.cinterop.useContents
 import org.jetbrains.skia.BackendRenderTarget
 import org.jetbrains.skia.DirectContext
 import org.jetbrains.skiko.*
+import org.jetbrains.skiko.redrawer.Redrawer
 import platform.CoreGraphics.CGColorCreate
 import platform.CoreGraphics.CGColorSpaceCreateDeviceRGB
 import platform.CoreGraphics.CGContextRef
@@ -24,29 +25,6 @@ internal class MetalRedrawer(
     private val layer: SkiaLayer,
     private val properties: SkiaLayerProperties
 ) : Redrawer {
-    private var isDisposed = false
-    internal val device = MTLCreateSystemDefaultDevice()!!
-    private val queue = device.newCommandQueue()!!
-    private var currentDrawable: CAMetalDrawableProtocol? = null
-    private val metalLayer = MetalLayer()
-
-    init {
-        metalLayer.init(this.layer, device)
-    }
-
-    private val frameDispatcher = FrameDispatcher(SkikoDispatchers.Main) {
-        if (layer.isShowing()) {
-            layer.update(getTimeNanos())
-            draw()
-        }
-    }
-
-    fun makeContext() = DirectContext.makeMetal(device.objcPtr(), queue.objcPtr())
-
-    fun makeRenderTarget(width: Int, height: Int): BackendRenderTarget {
-        currentDrawable = metalLayer.nextDrawable()!!
-        return BackendRenderTarget.makeMetal(width, height, currentDrawable!!.texture.objcPtr())
-    }
 
     override fun dispose() {
         if (!isDisposed) {

@@ -4,9 +4,6 @@ import kotlinx.cinterop.ObjCAction
 import kotlinx.cinterop.useContents
 import org.jetbrains.skia.PictureRecorder
 import org.jetbrains.skia.Rect
-import org.jetbrains.skiko.context.MetalContextHandler
-import org.jetbrains.skiko.redrawer.MetalRedrawer
-import platform.Foundation.NSNotificationCenter
 import platform.Foundation.NSSelectorFromString
 import platform.UIKit.*
 import platform.darwin.NSObject
