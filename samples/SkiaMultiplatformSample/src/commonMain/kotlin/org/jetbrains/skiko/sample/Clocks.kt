@@ -5,6 +5,8 @@ import org.jetbrains.skia.paragraph.FontCollection
 import org.jetbrains.skia.paragraph.ParagraphBuilder
 import org.jetbrains.skia.paragraph.ParagraphStyle
 import org.jetbrains.skia.paragraph.TextStyle
+import org.jetbrains.skiko.currentSystemTheme
+import org.jetbrains.skiko.SkiaLayer
 import org.jetbrains.skiko.SkikoView
 import org.jetbrains.skiko.SkikoPointerEvent
 import org.jetbrains.skiko.isLeftClick
@@ -12,7 +14,7 @@ import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.math.PI
 
-class Clocks: SkikoView {
+class Clocks(private val layer: SkiaLayer): SkikoView {
     private var frame = 0
     private var xpos = 0.0
     private var ypos = 0.0
@@ -69,6 +71,13 @@ class Clocks: SkikoView {
         }
 
         val style = ParagraphStyle()
+        val renderInfo = ParagraphBuilder(style, fontCollection)
+            .pushStyle(TextStyle().setColor(0xFF000000.toInt()))
+            .addText("Graphics API: ${layer.renderApi} ✿ﾟ ${currentSystemTheme}")
+            .popStyle()
+            .build()
+        renderInfo.layout(Float.POSITIVE_INFINITY)
+        renderInfo.paint(canvas, 5f, 5f)
         val frames = ParagraphBuilder(style, fontCollection)
             .pushStyle(TextStyle().setColor(0xFFFFAA0A.toInt()).setFontSize(25f))
             .addText("Frames: ${frame++}")

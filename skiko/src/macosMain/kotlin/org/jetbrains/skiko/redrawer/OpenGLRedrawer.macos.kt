@@ -65,19 +65,19 @@ internal class MacOsOpenGLRedrawer(
 }
 
 internal class MacosGLLayer : CAOpenGLLayer {
-    private lateinit var layer: SkiaLayer
+    private lateinit var skiaLayer: SkiaLayer
     @OverrideInit
     constructor(): super()
     @OverrideInit
     constructor(layer: Any): super(layer)
 
     fun init(layer: SkiaLayer) {
-        this.layer = layer
+        skiaLayer = layer
         this.setNeedsDisplayOnBoundsChange(true)
         this.removeAllAnimations()
         this.setAutoresizingMask(kCALayerWidthSizable or kCALayerHeightSizable )
-        layer.nsView.layer = this
-        layer.nsView.wantsLayer = true
+        skiaLayer.nsView.layer = this
+        skiaLayer.nsView.wantsLayer = true
         this.contentsGravity = kCAGravityTopLeft;
     }
 
@@ -111,8 +111,8 @@ internal class MacosGLLayer : CAOpenGLLayer {
     ) {
         CGLSetCurrentContext(ctx);
         try {
-            layer.update(getTimeNanos())
-            layer.draw()
+            skiaLayer.update(getTimeNanos())
+            skiaLayer.draw()
         } catch (e: Throwable) {
             e.printStackTrace()
             throw e

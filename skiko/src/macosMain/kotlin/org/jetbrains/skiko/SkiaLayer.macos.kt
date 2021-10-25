@@ -17,7 +17,11 @@ import platform.CoreGraphics.CGRectMake
 actual open class SkiaLayer(
     private val properties: SkiaLayerProperties = makeDefaultSkiaLayerProperties()
 ) {
-    actual var renderApi: GraphicsApi = GraphicsApi.OPENGL
+    fun isShowing(): Boolean {
+        return true
+    }
+
+    actual var renderApi: GraphicsApi = GraphicsApi.METAL
     actual val contentScale: Float
         get() = if (this::nsView.isInitialized) nsView.window!!.backingScaleFactor.toFloat() else 1.0f
 
@@ -37,9 +41,9 @@ actual open class SkiaLayer(
 
     actual var skikoView: SkikoView? = null
 
-    private var contextHandler = MacOSOpenGLContextHandler(this)
+    private var contextHandler: ContextHandler = createNativeContextHandler(this, renderApi)
 
-    private var redrawer: Redrawer? = null
+    internal var redrawer: Redrawer? = null
 
     private var picture: PictureHolder? = null
     private val pictureRecorder = PictureRecorder()
@@ -131,18 +135,16 @@ actual open class SkiaLayer(
                 }
                 nsView.frame = CGRectMake(0.0, 0.0, w, h)
                 redrawer?.syncSize()
-                initedCanvas = false
                 redrawer?.redrawImmediately()
             }
 
             override fun windowDidChangeBackingProperties(notification: NSNotification) {
                 redrawer?.syncSize()
-                initedCanvas = false
                 redrawer?.redrawImmediately()
             }
         }
         window.contentView!!.addSubview(nsView)
-        redrawer = createNativeRedrawer(this, GraphicsApi.OPENGL, properties).apply {
+        redrawer = createNativeRedrawer(this, renderApi, properties).apply {
             syncSize()
             needRedraw()
         }
@@ -151,7 +153,6 @@ actual open class SkiaLayer(
     actual fun detach() {
         redrawer?.dispose()
         redrawer = null
-        initedCanvas = false
     }
 
     actual fun needRedraw() {
@@ -173,18 +174,13 @@ actual open class SkiaLayer(
         this.picture = PictureHolder(picture, pictureWidth.toInt(), pictureHeight.toInt())
     }
 
-    private var initedCanvas = false
-
     fun draw() {
         contextHandler.apply {
-            if (!initedCanvas) {
-                if (!initContext()) {
-                    error("initContext() failure")
-                    return
-                }
-                initCanvas()
-                initedCanvas = true
+            if (!initContext()) {
+                error("initContext() failure")
+                return
             }
+            initCanvas()
             clearCanvas()
             val picture = picture
             if (picture != null) {
