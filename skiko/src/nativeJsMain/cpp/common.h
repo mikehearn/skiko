@@ -47,6 +47,10 @@ namespace skija {
         uint32_t from8To16(size_t i8);
     };
 
+    namespace Rect {
+        std::unique_ptr<SkRect> fromKotlinLTRB(KInteropPointer ltrb);
+    }
+
     namespace RRect {
         SkRRect toSkRRect(KFloat left, KFloat top, KFloat right, KFloat bottom, KFloat* jradii, KInt size);
     }

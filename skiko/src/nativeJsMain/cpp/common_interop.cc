@@ -86,9 +86,9 @@ std::unique_ptr<SkMatrix> skMatrix(KFloat* matrixArray) {
         return std::unique_ptr<SkMatrix>(nullptr);
     else {
         KFloat* m = matrixArray;
-        SkMatrix* ptr = new SkMatrix();
+        std::unique_ptr<SkMatrix> ptr = std::make_unique<SkMatrix>();
         ptr->setAll(m[0], m[1], m[2], m[3], m[4], m[5], m[6], m[7], m[8]);
-        return std::unique_ptr<SkMatrix>(ptr);
+        return ptr;
     }
 }
 
@@ -125,6 +125,17 @@ std::vector<SkString> skStringVector(KInteropPointerArray arr, KInt len) {
 }
 
 namespace skija {
+    namespace Rect {
+        std::unique_ptr<SkRect> fromKotlinLTRB(KInteropPointer ltrb) {
+            float* rect = reinterpret_cast<float*>(ltrb);
+            if (rect == nullptr) {
+                return std::unique_ptr<SkRect>(nullptr);
+            }
+
+            return std::make_unique<SkRect>(SkRect::MakeLTRB(rect[0], rect[1], rect[2], rect[3]));
+        }
+    }
+
     namespace RRect {
         SkRRect toSkRRect(KFloat left, KFloat top, KFloat right, KFloat bottom, KFloat* radii, KInt radiiSize) {
             SkRect rect {left, top, right, bottom};
