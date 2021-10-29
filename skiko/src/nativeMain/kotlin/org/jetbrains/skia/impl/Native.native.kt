@@ -188,7 +188,7 @@ actual class InteropScope actual constructor() {
         TODO("implement native fromInteropNativePointerArray")
     }
 
-    actual fun toInterop(interopPointers: Array<InteropPointer>): InteropPointer {
+    actual fun toInteropForArraysOfPointers(interopPointers: Array<InteropPointer>): InteropPointer {
         return toInterop(interopPointers.map { it.toLong() }.toLongArray())
     }
 
