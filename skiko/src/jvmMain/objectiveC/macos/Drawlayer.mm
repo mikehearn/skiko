@@ -12,7 +12,7 @@
 
 @property jobject canvasGlobalRef;
 @property (retain, strong) CALayer *container;
-@property (retain, strong) NSWindow *window;
+@property (weak) NSWindow *window;
 
 @end
 
@@ -30,13 +30,6 @@
     }
 
     return self;
-}
-
--(void) dealloc {
-    self.canvasGlobalRef = NULL;
-    [self.container release];
-    [self.window release];
-    [super dealloc];
 }
 
 - (BOOL) isFullScreen {
@@ -104,7 +97,7 @@ NSWindow *findCALayerWindow(NSView *rootView, CALayer *layer) {
 
 NSWindow *findWindow(jlong platformInfoPtr)
 {
-    NSObject<JAWT_SurfaceLayers>* dsi_mac = (__bridge NSObject<JAWT_SurfaceLayers> *) platformInfoPtr;
+    NSObject<JAWT_SurfaceLayers>* dsi_mac = (__bridge NSObject<JAWT_SurfaceLayers> *) ((void*)platformInfoPtr);
     CALayer* ca_layer = [dsi_mac windowLayer];
 
     NSWindow* target_window = nil;
@@ -125,14 +118,14 @@ JNIEXPORT void JNICALL Java_org_jetbrains_skiko_HardwareLayer_nativeInit(JNIEnv 
         layerStorage = [[NSMutableSet alloc] init];
     }
 
-    LayerHandler *layersSet = [[LayerHandler alloc] init];
-    NSObject<JAWT_SurfaceLayers>* dsi_mac = (__bridge NSObject<JAWT_SurfaceLayers> *) platformInfoPtr;
-    layersSet.container = [dsi_mac windowLayer];
+    LayerHandler *layer = [[LayerHandler alloc] init];
+    NSObject<JAWT_SurfaceLayers>* dsi_mac = (__bridge NSObject<JAWT_SurfaceLayers> *) (void*) platformInfoPtr;
+    layer.container = [dsi_mac windowLayer];
     jobject canvasGlobalRef = env->NewGlobalRef(canvas);
-    [layersSet setCanvasGlobalRef: canvasGlobalRef];
-    layersSet.window = findWindow(platformInfoPtr);
+    [layer setCanvasGlobalRef: canvasGlobalRef];
+    layer.window = findWindow(platformInfoPtr);
 
-    [layerStorage addObject: layersSet];
+    [layerStorage addObject: layer];
 }
 
 JNIEXPORT void JNICALL Java_org_jetbrains_skiko_HardwareLayer_nativeDispose(JNIEnv *env, jobject canvas)
@@ -142,7 +135,6 @@ JNIEXPORT void JNICALL Java_org_jetbrains_skiko_HardwareLayer_nativeDispose(JNIE
     {
         [layerStorage removeObject: layer];
         env->DeleteGlobalRef(layer.canvasGlobalRef);
-        [layer release];
     }
 }
 
@@ -165,21 +157,22 @@ JNIEXPORT void JNICALL Java_org_jetbrains_skiko_PlatformOperationsKt_osxSetFulls
     }
 }
 
-JNIEXPORT jlong JNICALL Java_org_jetbrains_skiko_HardwareLayer_getWindowHandle(JNIEnv *env, jobject canvas, jlong platformInfoPtr)
+JNIEXPORT jlong JNICALL Java_org_jetbrains_skiko_HardwareLayer_getWindowHandle(JNIEnv *env, jobject component, jlong platformInfoPtr)
 {
-    NSWindow* window = findWindow(platformInfoPtr);
-    return (jlong)window;
+    LayerHandler *layer = findByObject(env, component);
+    return (jlong) (__bridge void*) layer.window;
 }
 
-JNIEXPORT jlong JNICALL Java_org_jetbrains_skiko_HardwareLayer_getContentHandle(JNIEnv *env, jobject canvas, jlong platformInfoPtr)
+JNIEXPORT jlong JNICALL Java_org_jetbrains_skiko_HardwareLayer_getContentHandle(JNIEnv *env, jobject component, jlong platformInfoPtr)
 {
-    NSWindow* window = findWindow(platformInfoPtr);
-    return (jlong)window;
+    LayerHandler *layer = findByObject(env, component);
+    return (jlong) (__bridge void*) layer.window;
 }
 
-JNIEXPORT void JNICALL Java_org_jetbrains_skiko_PlatformOperationsKt_osxDisableTitleBar(JNIEnv *env, jobject properties, jlong platformInfoPtr)
+JNIEXPORT void JNICALL Java_org_jetbrains_skiko_PlatformOperationsKt_osxDisableTitleBar(JNIEnv *env, jobject obj, jobject component)
 {
-    NSWindow* window = findWindow(platformInfoPtr);
+    LayerHandler *layer = findByObject(env, component);
+    NSWindow *window = layer.window;
     if (window == nil) return;
     dispatch_sync(dispatch_get_main_queue(), ^{
         [window setTitlebarAppearsTransparent:YES];
@@ -204,8 +197,8 @@ void getMetalDeviceAndQueue(void** device, void** queue)
 {
     id<MTLDevice> fDevice = MTLCreateSystemDefaultDevice();
     id<MTLCommandQueue> fQueue = [fDevice newCommandQueue];
-    *device = (__bridge void*)fDevice;
-    *queue = (__bridge void*)fQueue;
+    *device = (__bridge void*) fDevice;
+    *queue = (__bridge void*) fQueue;
 }
 
 } // extern C
