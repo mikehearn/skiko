@@ -29,7 +29,7 @@ actual open class SkiaLayer internal constructor(
     private val properties: SkiaLayerProperties = makeDefaultSkiaLayerProperties(),
     private val renderFactory: RenderFactory = RenderFactory.Default
 ) : JPanel() {
-
+  //  val handle = autoreleasePoolPush()
     companion object {
         init {
             Library.load()
@@ -284,6 +284,7 @@ actual open class SkiaLayer internal constructor(
             backedLayer.dispose()
             isDisposed = true
         }
+       // autoreleasePoolPop(handle)
     }
 
     override fun setBounds(x: Int, y: Int, width: Int, height: Int) {

@@ -205,7 +205,7 @@ val skiaBinSubdir = "out/${buildType.id}-${targetOs.id}-${targetArch.id}"
 
 internal val Project.isInIdea: Boolean
     get() {
-        return System.getProperty("idea.active")?.toBoolean() == true
+        return false
     }
 
 val Project.supportNative: Boolean
