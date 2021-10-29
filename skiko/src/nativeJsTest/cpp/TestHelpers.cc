@@ -62,3 +62,11 @@ SKIKO_EXPORT KNativePointer org_jetbrains_skiko_tests_TestHelpers__1nWriteArrays
 
     return reinterpret_cast<KNativePointer>(mem);
 }
+SKIKO_EXPORT KNativePointer org_jetbrains_skiko_tests_TestHelpers__nStringByIndex(KInt index) {
+    switch (index) {
+        case 0: return new SkString("Hello");
+        case 1: return new SkString("Привет");
+        case 2: return new SkString("你好");
+        default: TODO("unknown");
+    }
+}
